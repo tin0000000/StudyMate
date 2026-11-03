@@ -6,6 +6,8 @@ import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
+import com.google.android.gms.tasks.Task
+import com.google.android.gms.tasks.Tasks
 import com.st10457568.studymate.core.StudyRules
 import com.st10457568.studymate.model.Assignment
 import com.st10457568.studymate.model.GradeRecord
@@ -13,6 +15,7 @@ import com.st10457568.studymate.model.Priority
 import com.st10457568.studymate.model.Subject
 import com.st10457568.studymate.model.TimetableEntry
 import com.st10457568.studymate.model.UserAccount
+import com.st10457568.studymate.notifications.ReminderScheduler
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.UUID
@@ -25,6 +28,11 @@ class LocalStudyRepository(context: Context) {
     fun firebaseConfigured(): Boolean = FirebaseApp.getApps(appContext).isNotEmpty()
 
     fun startCloudSync() = queueCloudSync()
+
+    fun rescheduleReminders() {
+        if (!notificationEnabled()) return
+        assignments().filterNot { it.completed }.forEach { ReminderScheduler.schedule(appContext, it) }
+    }
 
     /** Firestore queues these writes in its local cache while offline and sends them after reconnect. */
     fun syncWithCloud(onComplete: (Result<Boolean>) -> Unit) {
@@ -97,6 +105,43 @@ class LocalStudyRepository(context: Context) {
         currentUserId = null
     }
 
+    fun deleteCurrentAccount(onComplete: (Result<Unit>) -> Unit) {
+        val localUserId = currentUserId
+        if (localUserId == null) {
+            onComplete(Result.failure(IllegalStateException("There is no signed-in account to delete.")))
+            return
+        }
+        val deleteLocalData = {
+            assignments().forEach { ReminderScheduler.cancel(appContext, it.assignmentId) }
+            writeUsers(readUsers().filterNot { it.userId == localUserId })
+            listOf("subjects", "assignments", "timetable", "grades", "notifications", "language")
+                .forEach { prefs.edit().remove("${localUserId}_$it").apply() }
+            currentUserId = null
+        }
+        if (!firebaseConfigured()) {
+            deleteLocalData()
+            onComplete(Result.success(Unit))
+            return
+        }
+
+        val auth = FirebaseAuth.getInstance()
+        val deleteCloud: (String) -> Unit = { firebaseUid ->
+            val files = FirebaseStorage.getInstance().reference.child("users/$firebaseUid/$localUserId")
+            deleteStorageTree(files)
+                .continueWithTask { profileDocument(firebaseUid, localUserId).delete() }
+                .addOnSuccessListener {
+                    deleteLocalData()
+                    onComplete(Result.success(Unit))
+                }
+                .addOnFailureListener { onComplete(Result.failure(it)) }
+        }
+        if (auth.currentUser != null) deleteCloud(auth.currentUser!!.uid)
+        else auth.signInAnonymously().addOnSuccessListener { result ->
+            result.user?.uid?.let(deleteCloud)
+                ?: onComplete(Result.failure(IllegalStateException("Firebase sign-in failed.")))
+        }.addOnFailureListener { onComplete(Result.failure(it)) }
+    }
+
     fun currentUser(): UserAccount? {
         val id = currentUserId ?: return null
         return readUsers().firstOrNull { it.userId == id }
@@ -106,6 +151,8 @@ class LocalStudyRepository(context: Context) {
 
     fun setNotificationEnabled(enabled: Boolean) {
         prefs.edit().putBoolean(key("notifications"), enabled).apply()
+        if (enabled) rescheduleReminders()
+        else assignments().forEach { ReminderScheduler.cancel(appContext, it.assignmentId) }
     }
 
     fun language(): String = prefs.getString(key("language"), "English") ?: "English"
@@ -131,6 +178,7 @@ class LocalStudyRepository(context: Context) {
     }
 
     fun deleteSubject(subjectId: String) {
+        assignments().filter { it.subjectId == subjectId }.forEach { ReminderScheduler.cancel(appContext, it.assignmentId) }
         writeArray(key("subjects"), subjects().filterNot { it.subjectId == subjectId }.map(::subjectToJson))
         writeArray(key("assignments"), assignments().filterNot { it.subjectId == subjectId }.map(::assignmentToJson))
         writeArray(key("timetable"), timetable().filterNot { it.subjectId == subjectId }.map(::timetableToJson))
@@ -157,6 +205,7 @@ class LocalStudyRepository(context: Context) {
         if (errors.isNotEmpty()) return Result.failure(IllegalArgumentException(errors.joinToString("\n")))
         val assignment = Assignment(UUID.randomUUID().toString(), subjectId, title.trim(), description.trim(), dueDate.trim(), priority, false, reminderEnabled)
         writeArray(key("assignments"), assignments().map(::assignmentToJson) + assignmentToJson(assignment))
+        if (notificationEnabled()) ReminderScheduler.schedule(appContext, assignment)
         queueCloudSync()
         return Result.success(assignment)
     }
@@ -166,10 +215,15 @@ class LocalStudyRepository(context: Context) {
             if (it.assignmentId == assignmentId) it.copy(completed = !it.completed) else it
         }
         writeArray(key("assignments"), updated.map(::assignmentToJson))
+        updated.firstOrNull { it.assignmentId == assignmentId }?.let {
+            if (it.completed) ReminderScheduler.cancel(appContext, assignmentId)
+            else if (notificationEnabled()) ReminderScheduler.schedule(appContext, it)
+        }
         queueCloudSync()
     }
 
     fun deleteAssignment(assignmentId: String) {
+        ReminderScheduler.cancel(appContext, assignmentId)
         writeArray(key("assignments"), assignments().filterNot { it.assignmentId == assignmentId }.map(::assignmentToJson))
         queueCloudSync()
     }
@@ -281,6 +335,7 @@ class LocalStudyRepository(context: Context) {
                 GradeRecord(UUID.randomUUID().toString(), opsc.subjectId, "Planning report", 76.0, 100.0, "2026-09-03")
             ).map(::gradeToJson)
         )
+        rescheduleReminders()
     }
 
     private fun readUsers(): List<UserAccount> = readArray(KEY_USERS).map {
@@ -366,6 +421,14 @@ class LocalStudyRepository(context: Context) {
     private fun profileDocument(firebaseUid: String, localUserId: String) =
         FirebaseFirestore.getInstance().collection("users").document(firebaseUid)
             .collection("profiles").document(localUserId)
+
+    private fun deleteStorageTree(reference: com.google.firebase.storage.StorageReference): Task<Void> =
+        reference.listAll().continueWithTask { task ->
+            if (!task.isSuccessful) throw task.exception ?: IllegalStateException("Could not list stored files.")
+            val result = task.result
+            val deletes = result.items.map { it.delete() } + result.prefixes.map(::deleteStorageTree)
+            Tasks.whenAll(deletes)
+        }
 
     private fun cloudSnapshot(): Map<String, Any> = mapOf(
         "subjects" to jsonArrayToCloudList(key("subjects")),

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>StudyMate Privacy Policy</title>
+  <style>
+    body { font: 16px/1.6 system-ui, sans-serif; max-width: 760px; margin: 3rem auto; padding: 0 1rem; color: #202832; }
+    h1, h2 { color: #2166a5; }
+  </style>
+</head>
+<body>
+  <h1>StudyMate Privacy Policy</h1>
+  <p>Last updated: 3 November 2026</p>
+  <p>StudyMate is a student planner. This policy describes information used by the Android app and how to request its deletion.</p>
+
+  <h2>Information stored on your device</h2>
+  <p>When you register, StudyMate stores your email address, display name, a random password salt, and a PBKDF2 password hash on your device. It does not store your plain-text password. Your subjects, assignment details, timetable entries, marks, language choice, and reminder preference are stored in the app's private local storage.</p>
+
+  <h2>Optional Firebase services</h2>
+  <p>If the Firebase project is configured by the app publisher, StudyMate uses Firebase anonymous authentication, Cloud Firestore, and Firebase Storage. The app syncs planner records to a Firebase profile and can upload files that you attach to assignments. Firebase stores those records and files under a per-install anonymous account. The locally entered StudyMate password is not sent to Firebase. Firebase processes data under Google's applicable terms and privacy disclosures.</p>
+  <p>If Firebase is not configured, planner records and account data remain on your device. Assignment file upload and cloud sync are unavailable.</p>
+
+  <h2>Daily quote service</h2>
+  <p>The dashboard may request a daily quote from ZenQuotes over HTTPS. That request is made to ZenQuotes; StudyMate does not send your email, password, assignments, timetable, or marks with it. A built-in quote is used if the request fails.</p>
+
+  <h2>Sharing, advertising, and analytics</h2>
+  <p>StudyMate does not include advertising or analytics SDKs. It does not sell planner records. Information is transmitted only to Firebase when the publisher has configured Firebase features and to ZenQuotes for the quote request described above.</p>
+
+  <h2>Retention and deletion</h2>
+  <p>Local information stays on the device until you delete your StudyMate account or uninstall the app. To delete an account and its StudyMate information, open Settings and choose <em>Delete account</em>. When Firebase is configured, the app also deletes that account's Firestore profile and uploaded assignment files; an internet connection is required to complete the cloud deletion. If you cannot access the app, follow the instructions on the <a href="delete-account.html">account deletion page</a>.</p>
+
+  <h2>Security</h2>
+  <p>Passwords are stored as salted PBKDF2 hashes. Firebase and quote requests use HTTPS. Local planner data is stored in app-private storage, but this release does not encrypt the local JSON records with a separate application-level encryption key.</p>
+
+  <h2>Children</h2>
+  <p>StudyMate is intended as a general student productivity tool and is not designed for children under 13. The publisher does not knowingly collect personal information from children under 13.</p>
+
+  <h2>Contact</h2>
+  <p>For privacy questions or deletion requests, contact the developer using the support email displayed on the StudyMate Google Play listing.</p>
+</body>
+</html>

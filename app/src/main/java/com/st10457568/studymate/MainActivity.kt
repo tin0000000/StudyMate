@@ -1,8 +1,11 @@
 package com.st10457568.studymate
 
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.graphics.Color
 import android.graphics.Typeface
@@ -17,6 +20,9 @@ import android.widget.Spinner
 import android.widget.ArrayAdapter
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 import com.st10457568.studymate.core.StudyRules
 import com.st10457568.studymate.data.LocalStudyRepository
 import com.st10457568.studymate.model.Priority
@@ -36,9 +42,11 @@ class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
         repo = LocalStudyRepository(this)
         if (repo.currentUser() == null) showAuth() else {
             repo.startCloudSync()
+            repo.rescheduleReminders()
             showShell(Screen.DASHBOARD)
         }
     }
@@ -73,6 +81,7 @@ class MainActivity : Activity() {
         root.addView(label("Passwords are stored as salted PBKDF2 hashes in the demo fallback store. Firebase Auth is declared for the hosted build."))
 
         setContentView(scroll(root))
+        applySystemBarInsets(findViewById(android.R.id.content))
     }
 
     private fun showShell(selected: Screen) {
@@ -99,7 +108,21 @@ class MainActivity : Activity() {
         }
         root.addView(nav)
         setContentView(root)
+        applySystemBarInsets(root)
         renderContent(root, selected)
+    }
+
+    private fun applySystemBarInsets(root: View) {
+        val initialLeft = root.paddingLeft
+        val initialTop = root.paddingTop
+        val initialRight = root.paddingRight
+        val initialBottom = root.paddingBottom
+        ViewCompat.setOnApplyWindowInsetsListener(root) { view, insets ->
+            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            view.setPadding(initialLeft + bars.left, initialTop + bars.top, initialRight + bars.right, initialBottom + bars.bottom)
+            insets
+        }
+        ViewCompat.requestApplyInsets(root)
     }
 
     private fun renderContent(root: LinearLayout, screen: Screen) {
@@ -266,10 +289,29 @@ class MainActivity : Activity() {
         val notifications = CheckBox(this).apply {
             text = "Assignment reminders enabled"
             isChecked = repo.notificationEnabled()
-            setOnCheckedChangeListener { _, checked -> repo.setNotificationEnabled(checked) }
+            setOnCheckedChangeListener { _, checked ->
+                repo.setNotificationEnabled(checked)
+                if (checked) requestNotificationPermissionIfNeeded()
+            }
         }
         content.addView(notifications)
         content.addView(card("Offline-ready NoSQL storage: changes are saved on this device and remain available without an internet connection."))
+        content.addView(actionButton("Privacy policy") { openPrivacyPolicy() })
+        content.addView(actionButton("Delete account") {
+            AlertDialog.Builder(this)
+                .setTitle("Delete StudyMate account?")
+                .setMessage("This permanently removes this local account and its StudyMate data. If Firebase is configured, its cloud profile and uploaded attachments are deleted too.")
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton("Delete") { _, _ ->
+                    repo.deleteCurrentAccount { result ->
+                        runOnUiThread {
+                            result.onSuccess { showAuth(); toast("Account and associated StudyMate data deleted.") }
+                                .onFailure { toast(it.message ?: "Could not delete account. Connect to the internet and try again.") }
+                        }
+                    }
+                }
+                .show()
+        })
         content.addView(actionButton("Log out") {
             repo.logout()
             showAuth()
@@ -347,6 +389,22 @@ class MainActivity : Activity() {
 
     private fun toast(message: String) = Toast.makeText(this, message, Toast.LENGTH_LONG).show()
 
+    private fun requestNotificationPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) {
+            requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), REQUEST_NOTIFICATIONS)
+        }
+    }
+
+    private fun openPrivacyPolicy() {
+        try {
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(PRIVACY_POLICY_URL)))
+        } catch (_: android.content.ActivityNotFoundException) {
+            toast("Open the StudyMate privacy policy at $PRIVACY_POLICY_URL")
+        }
+    }
+
     private fun pickAssignmentAttachment(assignmentId: String) {
         if (!repo.firebaseConfigured()) {
             toast("Add the Firebase app configuration to upload blob attachments.")
@@ -396,6 +454,7 @@ class MainActivity : Activity() {
                 "Subject name" to "Vaknaam", "Assessment name" to "Assesseringnaam", "Location" to "Ligging",
                 "Add subject" to "Voeg vak by", "Save mark" to "Stoor punt", "Save timetable entry" to "Stoor roosterinskrywing",
                 "Sync with Firebase" to "Sinkroniseer met Firebase",
+                "Privacy policy" to "Privaatheidsbeleid", "Delete account" to "Verwyder rekening",
                 "Register" to "Registreer", "Log in" to "Teken aan", "Email" to "E-pos", "Password" to "Wagwoord",
                 "Attach file" to "Heg lêer aan", "Open file" to "Maak lêer oop",
                 "Display name" to "Vertoonnaam", "Student planner and progress tracker" to "Studente beplanner en vorderingsnaspoorder"
@@ -412,6 +471,7 @@ class MainActivity : Activity() {
                 "Subject name" to "Igama lesifundo", "Assessment name" to "Igama lokuhlolwa", "Location" to "Indawo",
                 "Add subject" to "Engeza isifundo", "Save mark" to "Londoloza amamaki", "Save timetable entry" to "Londoloza uhlelo",
                 "Sync with Firebase" to "Vumelanisa ne-Firebase",
+                "Privacy policy" to "Inqubomgomo yobumfihlo", "Delete account" to "Susa i-akhawunti",
                 "Register" to "Bhalisa", "Log in" to "Ngena ngemvume", "Email" to "I-imeyili", "Password" to "Iphasiwedi",
                 "Attach file" to "Namathisela ifayela", "Open file" to "Vula ifayela",
                 "Display name" to "Igama eliboniswayo", "Student planner and progress tracker" to "Uhlelo lokuhlela nokulandelela intuthuko yomfundi"
@@ -431,5 +491,7 @@ class MainActivity : Activity() {
 
     companion object {
         private const val REQUEST_ATTACHMENT = 613
+        private const val REQUEST_NOTIFICATIONS = 614
+        private const val PRIVACY_POLICY_URL = "https://tin0000000.github.io/StudyMate/privacy-policy.html"
     }
 }
