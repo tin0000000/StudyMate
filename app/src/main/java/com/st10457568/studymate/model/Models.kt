@@ -22,7 +22,8 @@ data class Assignment(
     val dueDate: String,
     val priority: Priority,
     val completed: Boolean,
-    val reminderEnabled: Boolean
+    val reminderEnabled: Boolean,
+    val attachmentUrl: String = ""
 )
 
 enum class Priority {

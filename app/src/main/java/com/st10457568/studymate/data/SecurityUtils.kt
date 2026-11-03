@@ -6,6 +6,7 @@ import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.PBEKeySpec
 
 object SecurityUtils {
+    // A unique random salt stops identical passwords from producing identical stored hashes.
     fun newSalt(): String {
         val salt = ByteArray(16)
         SecureRandom().nextBytes(salt)
@@ -14,6 +15,7 @@ object SecurityUtils {
 
     fun hashPassword(password: String, salt: String): String {
         val decodedSalt = Base64.decode(salt, Base64.NO_WRAP)
+        // PBKDF2 makes each password check deliberately expensive compared with a fast digest.
         val spec = PBEKeySpec(password.toCharArray(), decodedSalt, 120_000, 256)
         val bytes = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256").generateSecret(spec).encoded
         return Base64.encodeToString(bytes, Base64.NO_WRAP)

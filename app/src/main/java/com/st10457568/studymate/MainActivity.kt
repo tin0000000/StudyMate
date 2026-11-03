@@ -1,6 +1,8 @@
 package com.st10457568.studymate
 
 import android.app.Activity
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.graphics.Color
 import android.graphics.Typeface
@@ -30,6 +32,7 @@ class MainActivity : Activity() {
     private val blue = Color.rgb(33, 102, 165)
     private val green = Color.rgb(27, 138, 90)
     private val mist = Color.rgb(244, 248, 250)
+    private var pendingAttachmentAssignmentId: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -159,9 +162,15 @@ class MainActivity : Activity() {
         content.addView(section("Assignments"))
         StudyRules.sortAssignmentsByDueDate(repo.assignments()).forEach { assignment ->
             val row = vertical()
-            row.addView(card("${if (assignment.completed) "Done" else "Open"} • ${assignment.title}\n${subjectName(assignment.subjectId)} • ${assignment.priority} • ${assignment.dueDate}\n${assignment.description}"))
+            row.addView(card("${if (assignment.completed) "Done" else "Open"} • ${assignment.title}\n${subjectName(assignment.subjectId)} • ${assignment.priority} • ${assignment.dueDate}\n${assignment.description}${if (assignment.attachmentUrl.isNotBlank()) "\nAttachment uploaded" else ""}"))
             val buttons = horizontal()
             buttons.addView(actionButton("Toggle") { repo.toggleAssignment(assignment.assignmentId); showShell(Screen.TASKS) })
+            buttons.addView(actionButton("Attach file") { pickAssignmentAttachment(assignment.assignmentId) })
+            if (assignment.attachmentUrl.isNotBlank()) {
+                buttons.addView(actionButton("Open file") {
+                    startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(assignment.attachmentUrl)))
+                })
+            }
             buttons.addView(actionButton("Delete") { repo.deleteAssignment(assignment.assignmentId); showShell(Screen.TASKS) })
             row.addView(buttons)
             content.addView(row)
@@ -338,6 +347,40 @@ class MainActivity : Activity() {
 
     private fun toast(message: String) = Toast.makeText(this, message, Toast.LENGTH_LONG).show()
 
+    private fun pickAssignmentAttachment(assignmentId: String) {
+        if (!repo.firebaseConfigured()) {
+            toast("Add the Firebase app configuration to upload blob attachments.")
+            return
+        }
+        pendingAttachmentAssignmentId = assignmentId
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "*/*"
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
+        }
+        startActivityForResult(intent, REQUEST_ATTACHMENT)
+    }
+
+    @Deprecated("The app uses the platform document picker for a small attachment flow.")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode != REQUEST_ATTACHMENT || resultCode != RESULT_OK) return
+        val uri = data?.data ?: return
+        val assignmentId = pendingAttachmentAssignmentId ?: return
+        try {
+            contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        } catch (_: SecurityException) {
+            // The provider may grant a temporary read permission only; upload immediately below.
+        }
+        repo.uploadAssignmentAttachment(assignmentId, uri) { result ->
+            runOnUiThread {
+                result.onSuccess { showShell(Screen.TASKS); toast("Attachment uploaded.") }
+                    .onFailure { toast(it.message ?: "Attachment upload failed.") }
+            }
+        }
+        pendingAttachmentAssignmentId = null
+    }
+
     private fun localized(text: String): String {
         val language = repo.language()
         val translations = when (language) {
@@ -354,6 +397,7 @@ class MainActivity : Activity() {
                 "Add subject" to "Voeg vak by", "Save mark" to "Stoor punt", "Save timetable entry" to "Stoor roosterinskrywing",
                 "Sync with Firebase" to "Sinkroniseer met Firebase",
                 "Register" to "Registreer", "Log in" to "Teken aan", "Email" to "E-pos", "Password" to "Wagwoord",
+                "Attach file" to "Heg lêer aan", "Open file" to "Maak lêer oop",
                 "Display name" to "Vertoonnaam", "Student planner and progress tracker" to "Studente beplanner en vorderingsnaspoorder"
             )
             "isiZulu" -> mapOf(
@@ -369,6 +413,7 @@ class MainActivity : Activity() {
                 "Add subject" to "Engeza isifundo", "Save mark" to "Londoloza amamaki", "Save timetable entry" to "Londoloza uhlelo",
                 "Sync with Firebase" to "Vumelanisa ne-Firebase",
                 "Register" to "Bhalisa", "Log in" to "Ngena ngemvume", "Email" to "I-imeyili", "Password" to "Iphasiwedi",
+                "Attach file" to "Namathisela ifayela", "Open file" to "Vula ifayela",
                 "Display name" to "Igama eliboniswayo", "Student planner and progress tracker" to "Uhlelo lokuhlela nokulandelela intuthuko yomfundi"
             )
             else -> emptyMap()
@@ -382,5 +427,9 @@ class MainActivity : Activity() {
         TIMETABLE("Timetable"),
         PROGRESS("Progress"),
         SETTINGS("Settings")
+    }
+
+    companion object {
+        private const val REQUEST_ATTACHMENT = 613
     }
 }

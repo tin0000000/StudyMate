@@ -8,7 +8,7 @@ StudyMate helps a student plan academic work in one place. It addresses the prac
 
 The project uses a small native Android interface written in Kotlin. The main navigation separates the dashboard, tasks, timetable, progress, and settings. Form fields are validated by the repository before data is stored, and invalid values return readable errors. The app has a blue and green visual palette, a custom calendar/check launcher icon, and English, Afrikaans, and isiZulu labels for common navigation and form actions.
 
-The app uses an on-device key-value NoSQL store. Each signed-in local user has separate keys, and collection values are JSON documents. This makes the principal CRUD flows available offline and preserves them between launches. When a Firebase project is supplied, a Firestore adapter mirrors those collections to a user-scoped document; Firestore's local cache queues writes while offline and sends them when the connection returns. The Settings action reads the document after writing. The security rules limit the remote path to the authenticated anonymous Firebase UID. The local app password fallback stores a salted PBKDF2 hash. The data model is organized around users, subjects, assignments, timetable entries, and grades.
+The app uses an on-device key-value NoSQL store. Each signed-in local user has separate keys, and collection values are JSON documents. This makes the principal CRUD flows available offline and preserves them between launches. When a Firebase project is supplied, a Firestore adapter mirrors those collections to a user-scoped document; Firestore's local cache queues writes while offline and sends them when the connection returns. The Settings action reads the document after writing. Assignment documents can include a Firebase Storage attachment URL; the app's document picker uploads the selected file to a UID-scoped path. Supplied Firestore and Storage rules limit access to the authenticated anonymous Firebase UID, and uploads are limited to 10 MB. The local app password fallback stores a salted PBKDF2 hash. The data model is organized around users, subjects, assignments, timetable entries, and grades.
 
 The dashboard calls the ZenQuotes daily REST endpoint using a background thread and applies connection/read timeouts. If the endpoint fails, it displays a local fallback quote. This means the API failure path does not prevent the dashboard from opening.
 
@@ -28,6 +28,7 @@ Git provides the project history. GitHub hosts the Kotlin source and CI workflow
 | --- | --- |
 | Working Android app, phone demonstration | Android source and debug build target are present. Demonstrate on a physical phone and record the requested video. |
 | NoSQL database, storing and reading data | Local key-value store with JSON documents; repository methods implement reads and writes for each collection. |
+| Blob storage | Optional assignment file uploads use Firebase Storage when the owner's project and bucket are configured; `storage.rules` enforces owner scope and a 10 MB upload limit. |
 | REST API | ZenQuotes daily endpoint and local fallback are implemented. |
 | User registration/login | Local demonstration authentication; PBKDF2 password hashing. |
 | Settings | Reminder preference and language setting are persisted locally. |

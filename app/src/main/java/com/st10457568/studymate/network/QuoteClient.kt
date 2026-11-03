@@ -7,6 +7,7 @@ import java.net.URL
 
 class QuoteClient {
     fun fetchDailyQuote(): Quote {
+        // The dashboard calls this on a worker thread; timeouts keep a slow endpoint from hanging it.
         val connection = URL("https://zenquotes.io/api/today").openConnection() as HttpURLConnection
         connection.connectTimeout = 5_000
         connection.readTimeout = 5_000

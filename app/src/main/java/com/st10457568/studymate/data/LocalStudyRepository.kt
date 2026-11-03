@@ -1,9 +1,11 @@
 package com.st10457568.studymate.data
 
 import android.content.Context
+import android.net.Uri
 import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
 import com.st10457568.studymate.core.StudyRules
 import com.st10457568.studymate.model.Assignment
 import com.st10457568.studymate.model.GradeRecord
@@ -17,6 +19,7 @@ import java.util.UUID
 
 class LocalStudyRepository(context: Context) {
     private val appContext = context.applicationContext
+    // SharedPreferences is the local key-value NoSQL store; each collection value is a JSON document array.
     private val prefs = context.getSharedPreferences("studymate_store", Context.MODE_PRIVATE)
 
     fun firebaseConfigured(): Boolean = FirebaseApp.getApps(appContext).isNotEmpty()
@@ -144,7 +147,8 @@ class LocalStudyRepository(context: Context) {
             dueDate = it.getString("dueDate"),
             priority = Priority.valueOf(it.getString("priority")),
             completed = it.optBoolean("completed"),
-            reminderEnabled = it.optBoolean("reminderEnabled", true)
+            reminderEnabled = it.optBoolean("reminderEnabled", true),
+            attachmentUrl = it.optString("attachmentUrl", "")
         )
     }
 
@@ -168,6 +172,40 @@ class LocalStudyRepository(context: Context) {
     fun deleteAssignment(assignmentId: String) {
         writeArray(key("assignments"), assignments().filterNot { it.assignmentId == assignmentId }.map(::assignmentToJson))
         queueCloudSync()
+    }
+
+    fun uploadAssignmentAttachment(assignmentId: String, uri: Uri, onComplete: (Result<Unit>) -> Unit) {
+        if (!firebaseConfigured()) {
+            onComplete(Result.failure(IllegalStateException("Add Firebase configuration before uploading attachments.")))
+            return
+        }
+        val userId = currentUserId
+        val assignment = assignments().firstOrNull { it.assignmentId == assignmentId }
+        if (userId == null || assignment == null) {
+            onComplete(Result.failure(IllegalStateException("Assignment is no longer available.")))
+            return
+        }
+        val auth = FirebaseAuth.getInstance()
+        val upload: (String) -> Unit = { firebaseUid ->
+            val extension = appContext.contentResolver.getType(uri)?.substringAfter('/') ?: "bin"
+            val ref = FirebaseStorage.getInstance().reference
+                .child("users/$firebaseUid/$userId/assignments/$assignmentId/${UUID.randomUUID()}.$extension")
+            ref.putFile(uri)
+                .continueWithTask { ref.downloadUrl }
+                .addOnSuccessListener { downloadUri ->
+                    val updated = assignments().map {
+                        if (it.assignmentId == assignmentId) it.copy(attachmentUrl = downloadUri.toString()) else it
+                    }
+                    writeArray(key("assignments"), updated.map(::assignmentToJson))
+                    queueCloudSync()
+                    onComplete(Result.success(Unit))
+                }
+                .addOnFailureListener { onComplete(Result.failure(it)) }
+        }
+        if (auth.currentUser != null) upload(auth.currentUser!!.uid)
+        else auth.signInAnonymously().addOnSuccessListener { result ->
+            result.user?.uid?.let(upload) ?: onComplete(Result.failure(IllegalStateException("Firebase sign-in failed.")))
+        }.addOnFailureListener { onComplete(Result.failure(it)) }
     }
 
     fun timetable(): List<TimetableEntry> = readArray(key("timetable")).map {
@@ -280,6 +318,7 @@ class LocalStudyRepository(context: Context) {
         .put("priority", value.priority.name)
         .put("completed", value.completed)
         .put("reminderEnabled", value.reminderEnabled)
+        .put("attachmentUrl", value.attachmentUrl)
 
     private fun timetableToJson(value: TimetableEntry) = JSONObject()
         .put("entryId", value.entryId)
