@@ -16,7 +16,6 @@ Features:
 - Review upcoming deadlines and daily timetable items.
 - Use the app in English, Afrikaans or isiZulu.
 - Keep core planner features available offline.
-- Optionally synchronize planner records and attach files when the publisher has configured Firebase services.
 
 StudyMate also retrieves a daily quote when a network connection is available. The app shows a built-in quote if the service cannot be reached.
 
