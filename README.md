@@ -1,63 +1,53 @@
-# StudyMate
+# StudyMate — final PoE project
 
-StudyMate is a Kotlin Android prototype for the OPSC Part 2 app submission. It is based on the supplied planning and research reports: a student planner that helps users manage assignments, timetable entries, study progress, and marks.
+StudyMate is a Kotlin Android student planner for assignment deadlines, weekly timetables, subjects, marks, and study progress. The final project builds on the Part 2 prototype and keeps core features usable without a network connection.
 
-## Implemented Prototype Features
+## Features
 
-- Register, log in, and log out.
-- Passwords in the demo fallback store are protected with salted PBKDF2 hashes.
-- Dashboard with upcoming deadlines, today's timetable, weekly progress, and a daily motivational quote from ZenQuotes.
-- Assignment CRUD fields: title, subject, description, due date, priority, completion status, and reminder setting.
-- Subject management.
-- Timetable entries with subject, day, start time, end time, and location.
-- Mark capture and subject average calculation.
-- Settings screen with reminder preference and account logout.
-- Invalid inputs are handled with validation messages instead of crashes.
-- Unit tests cover validation, date sorting, and average calculation.
-- Firebase Auth and Firestore SDK dependencies are declared for the hosted production version.
+- Register, log in, and log out. The local demonstration account store hashes passwords with salted PBKDF2; it does not save plain-text passwords.
+- Create, complete, and delete assignments; manage subjects and timetable entries; save marks and view subject averages.
+- View upcoming work, today's timetable, weekly completion, and a daily quote from the ZenQuotes REST API. A bundled quote is shown when the service is offline.
+- Keep user data in an on-device key-value NoSQL store. Collection values are JSON documents under per-user keys (`subjects`, `assignments`, `timetable`, and `grades`), so the CRUD flows continue to work offline and after restarting the app.
+- Choose English, Afrikaans, or isiZulu for the main navigation, forms, and common actions.
+- Change the assignment reminder preference in Settings.
+- Validate user input and show errors in the app rather than crashing.
+- Use the StudyMate launcher icon in `app/src/main/res/drawable/ic_launcher_foreground.xml`.
 
-## Data Stored
+The app can mirror the per-user JSON collections to Firestore when Firebase is configured. Firestore's Android offline cache queues writes while offline; the Settings sync action also performs a read after writing. To enable it, create a Firebase Android project for this application ID, add `app/google-services.json` (do not commit this file), enable Anonymous Authentication, create the Firestore database, and deploy [firestore.rules](firestore.rules). The Google Services Gradle plugin activates only when that file exists. The local app account is still used for the demo; Firebase uses a per-install anonymous account to protect the remote document path.
 
-The local prototype stores data under the signed-in user. The structure mirrors the planned Firestore layout:
+Google SSO and FCM push messages are not implemented in this build. SSO needs OAuth credentials; FCM push delivery also needs a Firebase project and a trusted server/sender. These are marked PoE-only in the brief and require project-specific credentials and setup.
 
-- `users/{userId}`: email, display name, salted password hash for the local fallback only.
-- `users/{userId}/subjects/{subjectId}`: name and colour.
-- `users/{userId}/assignments/{assignmentId}`: title, subject, description, due date, priority, completion status, and reminder flag.
-- `users/{userId}/timetable/{entryId}`: subject, day, start time, end time, and location.
-- `users/{userId}/grades/{gradeId}`: assessment name, mark, total, and date.
+## Build and automated checks
 
-For a real Firebase submission, add the Firebase project configuration file from the Firebase console and replace `LocalStudyRepository` with a Firestore-backed repository that writes to the same paths.
+Requirements: Android Studio with JDK 17 and Android SDK 34.
 
-## External API
-
-The dashboard calls:
-
-`https://zenquotes.io/api/today`
-
-If the request fails, StudyMate shows a local fallback quote so the app remains usable offline or during API errors.
-
-## Build and Test
-
-Open the project in Android Studio, allow Gradle sync to download dependencies, then run:
-
-```bash
-gradle testDebugUnitTest assembleDebug
+```powershell
+.\gradlew.bat testDebugUnitTest assembleDebug
 ```
 
-The GitHub Actions workflow in `.github/workflows/android.yml` runs the same test and debug build commands.
+GitHub Actions runs the unit tests and debug build for pushes and pull requests to `main` or `master` using `.github/workflows/android.yml`. A successful CI run requires the repository to be pushed to GitHub.
 
-## Demo Video Checklist
+The sync path can be verified after Firebase setup by creating records while offline, reconnecting, and checking the matching document under `users/{anonymousUid}/profiles/{localUserId}` in Firestore. The demo login is local and the Firebase anonymous account is device-specific; this implementation does not provide cross-device account linking.
 
-Show these flows in the video:
+The generated debug APK is at `app/build/outputs/apk/debug/app-debug.apk`. It is suitable for installation on a test device. A Play Store release needs a production signing key, Play Console access, a release build, and the applicable store assets; those account-bound items are not present in this project.
 
-- Register a user, log out, then log back in.
-- Explain that the prototype fallback stores a salted password hash, while the production SDK dependencies are included for Firebase Auth and Firestore.
-- Open Settings and change the reminder setting.
-- Open Dashboard and point out the ZenQuotes REST API quote plus the fallback behaviour.
-- Add an assignment, mark it complete, and delete it.
-- Add a timetable item.
-- Add a mark and show the calculated subject average.
+## Demo video outline
 
-## AI Tool Usage Write-Up
+Record on a physical Android phone. Show registration, logout/login, adding and completing an assignment, adding a timetable entry, adding a mark, changing the language and reminder preference, then open the dashboard and demonstrate the quote/API fallback. Narrate the local NoSQL storage, offline behavior, REST API, and CI workflow accurately. Do not claim that cloud sync, Google SSO, or FCM push is implemented in this build.
 
-AI assistance was used to help scaffold the Kotlin Android prototype, structure the README, create validation and calculation unit tests, and align the implementation with the planning report. The generated code was reviewed and adjusted to use a compact native Android UI, local validation, password hashing, a REST API client, and a data structure that matches the planned Firebase/Firestore paths.
+Add the unlisted video URL to this README after recording. Keep the video voice-over enabled and show the app running on the phone.
+
+## GitHub and release process
+
+The Android source and workflow are in this repository. Commit in small steps and push to the configured GitHub remote. Once the final CI build succeeds, tag the final submission commit:
+
+```bash
+git tag -a final-PoE -m "Final PoE submission"
+git push origin final-PoE
+```
+
+See [FINAL_REPORT.md](FINAL_REPORT.md) for the design, implementation, CI, and current requirement status. See [RELEASE_NOTES.md](RELEASE_NOTES.md) for the changes since the prototype.
+
+## AI use statement
+
+AI assistance was used to scaffold and review parts of the Kotlin Android prototype, improve validation and documentation, and help prepare the automated test/build workflow. Generated code and text were reviewed and adapted for this project. No AI-generated image assets are included.

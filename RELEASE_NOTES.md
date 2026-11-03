@@ -1,0 +1,16 @@
+# StudyMate — final PoE release notes
+
+## Changes since the Part 2 prototype
+
+- Added persisted app-language selection with English, Afrikaans, and isiZulu translations for core navigation, common actions, and form labels.
+- Added an optional Firestore document sync path with per-user rules and offline queued writes, activated when the Firebase app configuration is supplied.
+- Retained offline-first assignment, timetable, subject, and mark management in a per-user JSON document store.
+- Added documentation for the data model, REST API behavior, test coverage, and GitHub Actions workflow.
+- Added a final project report and a physical-device demo outline to the README.
+- Kept the app icon, input validation, local quote fallback, password hashing, and automated unit tests from the prototype.
+
+## Known gaps
+
+- Live Firestore sync requires the project owner's `google-services.json`, Firestore database, and Anonymous Authentication setup. The demo account is local; cloud profiles are device-specific.
+- Google SSO and FCM push notifications need provider credentials and server setup and are not included.
+- A physical-device demonstration video, production-signed APK/AAB, Play Console screenshots, and store publication evidence must be created with the project owner's device and accounts.

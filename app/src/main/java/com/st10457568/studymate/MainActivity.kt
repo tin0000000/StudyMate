@@ -34,7 +34,10 @@ class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         repo = LocalStudyRepository(this)
-        if (repo.currentUser() == null) showAuth() else showShell(Screen.DASHBOARD)
+        if (repo.currentUser() == null) showAuth() else {
+            repo.startCloudSync()
+            showShell(Screen.DASHBOARD)
+        }
     }
 
     private fun showAuth() {
@@ -146,7 +149,7 @@ class MainActivity : Activity() {
         val reminder = CheckBox(this).apply { text = "Reminder enabled"; isChecked = true }
         listOf(subject, title, desc, due, priority, reminder).forEach(content::addView)
         content.addView(actionButton("Save assignment") {
-            val subjectId = subject.selectedItem as? String ?: ""
+            val subjectId = selectedSubjectId(subject)
             val selectedPriority = Priority.valueOf(priority.selectedItem as String)
             repo.saveAssignment(subjectId, title.text.toString(), desc.text.toString(), due.text.toString(), selectedPriority, reminder.isChecked)
                 .onSuccess { showShell(Screen.TASKS) }
@@ -174,7 +177,7 @@ class MainActivity : Activity() {
         val location = input("Location")
         listOf(subject, day, start, end, location).forEach(content::addView)
         content.addView(actionButton("Save timetable entry") {
-            repo.saveTimetable(subject.selectedItem as? String ?: "", day.text.toString(), start.text.toString(), end.text.toString(), location.text.toString())
+            repo.saveTimetable(selectedSubjectId(subject), day.text.toString(), start.text.toString(), end.text.toString(), location.text.toString())
                 .onSuccess { showShell(Screen.TIMETABLE) }
                 .onFailure { toast(it.message ?: "Could not save timetable entry") }
         })
@@ -214,7 +217,7 @@ class MainActivity : Activity() {
         listOf(subject, name, mark, total, date).forEach(content::addView)
         content.addView(actionButton("Save mark") {
             repo.saveGrade(
-                subject.selectedItem as? String ?: "",
+                selectedSubjectId(subject),
                 name.text.toString(),
                 mark.text.toString().toDoubleOrNull() ?: -1.0,
                 total.text.toString().toDoubleOrNull() ?: 0.0,
@@ -229,13 +232,35 @@ class MainActivity : Activity() {
 
     private fun settings(content: LinearLayout) {
         content.addView(section("Settings"))
+        content.addView(label("App language"))
+        val languages = listOf("English", "Afrikaans", "isiZulu")
+        val languagePicker = Spinner(this).apply {
+            adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, languages)
+            setSelection(languages.indexOf(repo.language()).coerceAtLeast(0))
+        }
+        content.addView(languagePicker)
+        content.addView(actionButton("Save language") {
+            repo.setLanguage(languagePicker.selectedItem as String)
+            showShell(Screen.SETTINGS)
+        })
+        content.addView(actionButton("Sync with Firebase") {
+            repo.syncWithCloud { result ->
+                runOnUiThread {
+                    val message = result.fold(
+                        onSuccess = { online -> if (online) "Cloud sync complete." else "Offline: sync is queued for when you reconnect." },
+                        onFailure = { it.message ?: "Cloud sync failed." }
+                    )
+                    toast(message)
+                }
+            }
+        })
         val notifications = CheckBox(this).apply {
             text = "Assignment reminders enabled"
             isChecked = repo.notificationEnabled()
             setOnCheckedChangeListener { _, checked -> repo.setNotificationEnabled(checked) }
         }
         content.addView(notifications)
-        content.addView(card("Data structure mirrors Firestore paths:\nusers/{userId}/subjects\nusers/{userId}/assignments\nusers/{userId}/timetable\nusers/{userId}/grades"))
+        content.addView(card("Offline-ready NoSQL storage: changes are saved on this device and remain available without an internet connection."))
         content.addView(actionButton("Log out") {
             repo.logout()
             showAuth()
@@ -245,10 +270,13 @@ class MainActivity : Activity() {
     private fun subjectSpinner(): Spinner {
         val subjects = repo.subjects()
         return Spinner(this).apply {
-            adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, subjects.map { it.subjectId })
+            adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, subjects.map { it.name })
             contentDescription = "Subject"
         }
     }
+
+    private fun selectedSubjectId(spinner: Spinner): String =
+        repo.subjects().getOrNull(spinner.selectedItemPosition)?.subjectId.orEmpty()
 
     private fun subjectName(subjectId: String): String = repo.subjects().firstOrNull { it.subjectId == subjectId }?.name ?: subjectId
 
@@ -265,7 +293,7 @@ class MainActivity : Activity() {
     }
 
     private fun title(text: String, size: Int): TextView = TextView(this).apply {
-        this.text = text
+        this.text = localized(text)
         textSize = size.toFloat()
         setTextColor(blue)
         typeface = Typeface.DEFAULT_BOLD
@@ -273,7 +301,7 @@ class MainActivity : Activity() {
     }
 
     private fun section(text: String): TextView = TextView(this).apply {
-        this.text = text
+        this.text = localized(text)
         textSize = 20f
         typeface = Typeface.DEFAULT_BOLD
         setTextColor(green)
@@ -281,7 +309,7 @@ class MainActivity : Activity() {
     }
 
     private fun label(text: String): TextView = TextView(this).apply {
-        this.text = text
+        this.text = localized(text)
         textSize = 15f
         setTextColor(Color.DKGRAY)
         setPadding(0, 8, 0, 8)
@@ -296,19 +324,57 @@ class MainActivity : Activity() {
     }
 
     private fun input(hint: String): EditText = EditText(this).apply {
-        this.hint = hint
+        this.hint = localized(hint)
         textSize = 16f
         setSingleLine(false)
     }
 
     private fun actionButton(text: String, onClick: () -> Unit): Button = Button(this).apply {
-        this.text = text
+        this.text = localized(text)
         setTextColor(Color.WHITE)
         setBackgroundColor(if (text == "Delete") Color.rgb(160, 46, 46) else blue)
         setOnClickListener { onClick() }
     }
 
     private fun toast(message: String) = Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+
+    private fun localized(text: String): String {
+        val language = repo.language()
+        val translations = when (language) {
+            "Afrikaans" -> mapOf(
+                "Dashboard" to "Kontrolebord", "Tasks" to "Take", "Timetable" to "Rooster",
+                "Progress" to "Vordering", "Settings" to "Instellings", "Upcoming deadlines" to "Komende sperdatums",
+                "Today" to "Vandag", "Weekly progress" to "Weeklikse vordering", "Add assignment" to "Voeg taak by",
+                "Assignments" to "Take", "Save assignment" to "Stoor taak", "Add timetable entry" to "Voeg roosterinskrywing by",
+                "Weekly timetable" to "Weekrooster", "Subjects" to "Vakke", "Add mark" to "Voeg punt by",
+                "Marks" to "Punte", "App language" to "Programtaal", "Save language" to "Stoor taal",
+                "Assignment reminders enabled" to "Taakherinneringe aangeskakel", "Log out" to "Teken af",
+                "Quick add assignment" to "Voeg taak vinnig by", "Title" to "Titel", "Description" to "Beskrywing",
+                "Subject name" to "Vaknaam", "Assessment name" to "Assesseringnaam", "Location" to "Ligging",
+                "Add subject" to "Voeg vak by", "Save mark" to "Stoor punt", "Save timetable entry" to "Stoor roosterinskrywing",
+                "Sync with Firebase" to "Sinkroniseer met Firebase",
+                "Register" to "Registreer", "Log in" to "Teken aan", "Email" to "E-pos", "Password" to "Wagwoord",
+                "Display name" to "Vertoonnaam", "Student planner and progress tracker" to "Studente beplanner en vorderingsnaspoorder"
+            )
+            "isiZulu" -> mapOf(
+                "Dashboard" to "Ibhodi", "Tasks" to "Imisebenzi", "Timetable" to "Uhlelo lwezikhathi",
+                "Progress" to "Intuthuko", "Settings" to "Izilungiselelo", "Upcoming deadlines" to "Izinsuku zokugcina ezizayo",
+                "Today" to "Namuhla", "Weekly progress" to "Intuthuko yeviki", "Add assignment" to "Engeza umsebenzi",
+                "Assignments" to "Imisebenzi", "Save assignment" to "Londoloza umsebenzi", "Add timetable entry" to "Engeza ohlelweni lwezikhathi",
+                "Weekly timetable" to "Uhlelo lweviki", "Subjects" to "Izifundo", "Add mark" to "Engeza amamaki",
+                "Marks" to "Amamaki", "App language" to "Ulimi lohlelo", "Save language" to "Londoloza ulimi",
+                "Assignment reminders enabled" to "Izikhumbuzi zemisebenzi zivuliwe", "Log out" to "Phuma",
+                "Quick add assignment" to "Engeza umsebenzi ngokushesha", "Title" to "Isihloko", "Description" to "Incazelo",
+                "Subject name" to "Igama lesifundo", "Assessment name" to "Igama lokuhlolwa", "Location" to "Indawo",
+                "Add subject" to "Engeza isifundo", "Save mark" to "Londoloza amamaki", "Save timetable entry" to "Londoloza uhlelo",
+                "Sync with Firebase" to "Vumelanisa ne-Firebase",
+                "Register" to "Bhalisa", "Log in" to "Ngena ngemvume", "Email" to "I-imeyili", "Password" to "Iphasiwedi",
+                "Display name" to "Igama eliboniswayo", "Student planner and progress tracker" to "Uhlelo lokuhlela nokulandelela intuthuko yomfundi"
+            )
+            else -> emptyMap()
+        }
+        return translations[text] ?: text
+    }
 
     private enum class Screen(val label: String) {
         DASHBOARD("Dashboard"),
