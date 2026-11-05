@@ -7,6 +7,7 @@
 - Added assignment file attachments backed by Firebase Storage with UID-scoped access rules and a 10 MB size limit.
 - Updated the Android build to target API 36, added system-bar insets for edge-to-edge layouts, and added a privacy policy entry point and account deletion flow.
 - Added a GitHub Pages workflow for hosting the public privacy policy.
+- Settings now explains that cloud sync and attachments are unavailable when Firebase is not configured, with Afrikaans and isiZulu translations.
 - Retained offline-first assignment, timetable, subject, and mark management in a per-user JSON document store.
 - Added documentation for the data model, REST API behavior, test coverage, and GitHub Actions workflow.
 - Added a final project report and a physical-device demo outline to the README.

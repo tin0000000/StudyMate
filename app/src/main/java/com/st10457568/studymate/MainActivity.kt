@@ -275,17 +275,21 @@ class MainActivity : Activity() {
             repo.setLanguage(languagePicker.selectedItem as String)
             showShell(Screen.SETTINGS)
         })
-        content.addView(actionButton("Sync with Firebase") {
-            repo.syncWithCloud { result ->
-                runOnUiThread {
-                    val message = result.fold(
-                        onSuccess = { online -> if (online) "Cloud sync complete." else "Offline: sync is queued for when you reconnect." },
-                        onFailure = { it.message ?: "Cloud sync failed." }
-                    )
-                    toast(message)
+        if (repo.firebaseConfigured()) {
+            content.addView(actionButton("Sync with Firebase") {
+                repo.syncWithCloud { result ->
+                    runOnUiThread {
+                        val message = result.fold(
+                            onSuccess = { online -> if (online) "Cloud sync complete." else "Offline: sync is queued for when you reconnect." },
+                            onFailure = { it.message ?: "Cloud sync failed." }
+                        )
+                        toast(message)
+                    }
                 }
-            }
-        })
+            })
+        } else {
+            content.addView(card(localized("Cloud sync and attachments are not configured in this build.")))
+        }
         val notifications = CheckBox(this).apply {
             text = "Assignment reminders enabled"
             isChecked = repo.notificationEnabled()
@@ -454,6 +458,7 @@ class MainActivity : Activity() {
                 "Subject name" to "Vaknaam", "Assessment name" to "Assesseringnaam", "Location" to "Ligging",
                 "Add subject" to "Voeg vak by", "Save mark" to "Stoor punt", "Save timetable entry" to "Stoor roosterinskrywing",
                 "Sync with Firebase" to "Sinkroniseer met Firebase",
+                "Cloud sync and attachments are not configured in this build." to "Wolksinkronisering en aanhegsels is nie in hierdie weergawe beskikbaar nie.",
                 "Privacy policy" to "Privaatheidsbeleid", "Delete account" to "Verwyder rekening",
                 "Register" to "Registreer", "Log in" to "Teken aan", "Email" to "E-pos", "Password" to "Wagwoord",
                 "Attach file" to "Heg lêer aan", "Open file" to "Maak lêer oop",
@@ -471,6 +476,7 @@ class MainActivity : Activity() {
                 "Subject name" to "Igama lesifundo", "Assessment name" to "Igama lokuhlolwa", "Location" to "Indawo",
                 "Add subject" to "Engeza isifundo", "Save mark" to "Londoloza amamaki", "Save timetable entry" to "Londoloza uhlelo",
                 "Sync with Firebase" to "Vumelanisa ne-Firebase",
+                "Cloud sync and attachments are not configured in this build." to "Ukuvumelanisa efwini nokunamathisela amafayela akutholakali kulolu hlelo.",
                 "Privacy policy" to "Inqubomgomo yobumfihlo", "Delete account" to "Susa i-akhawunti",
                 "Register" to "Bhalisa", "Log in" to "Ngena ngemvume", "Email" to "I-imeyili", "Password" to "Iphasiwedi",
                 "Attach file" to "Namathisela ifayela", "Open file" to "Vula ifayela",
