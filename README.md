@@ -1,5 +1,9 @@
 # StudyMate — final PoE project
 
+<p align="center">
+  <img src="docs/StudyMate-logo.png" alt="StudyMate logo" width="220">
+</p>
+
 StudyMate is a Kotlin Android student planner for assignment deadlines, weekly timetables, subjects, marks, and study progress. The final project builds on the Part 2 prototype and keeps core features usable without a network connection.
 
 ## Features
