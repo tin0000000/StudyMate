@@ -8,6 +8,7 @@
 - Updated the Android build to target API 36, added system-bar insets for edge-to-edge layouts, and added a privacy policy entry point and account deletion flow.
 - Added a GitHub Pages workflow for hosting the public privacy policy.
 - Settings now explains that cloud sync and attachments are unavailable when Firebase is not configured, with Afrikaans and isiZulu translations.
+- Refined the native interface with rounded cards, form fields and buttons, more consistent spacing, and a selected-state treatment for bottom navigation.
 - Retained offline-first assignment, timetable, subject, and mark management in a per-user JSON document store.
 - Added documentation for the data model, REST API behavior, test coverage, and GitHub Actions workflow.
 - Added a final project report and a physical-device demo outline to the README.

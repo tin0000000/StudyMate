@@ -9,6 +9,7 @@ import android.os.Build
 import android.os.Bundle
 import android.graphics.Color
 import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
 import android.view.Gravity
 import android.view.View
 import android.widget.Button
@@ -36,8 +37,10 @@ class MainActivity : Activity() {
     private lateinit var repo: LocalStudyRepository
     private val quoteClient = QuoteClient()
     private val blue = Color.rgb(33, 102, 165)
-    private val green = Color.rgb(27, 138, 90)
+    private val green = Color.rgb(27, 110, 91)
     private val mist = Color.rgb(244, 248, 250)
+    private val ink = Color.rgb(34, 48, 58)
+    private val line = Color.rgb(218, 228, 234)
     private var pendingAttachmentAssignmentId: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -53,7 +56,7 @@ class MainActivity : Activity() {
 
     private fun showAuth() {
         val root = vertical().apply {
-            setPadding(32, 60, 32, 32)
+            setPadding(dp(28), dp(56), dp(28), dp(28))
             setBackgroundColor(mist)
         }
 
@@ -87,7 +90,7 @@ class MainActivity : Activity() {
     private fun showShell(selected: Screen) {
         val root = vertical().apply { setBackgroundColor(Color.WHITE) }
         val toolbar = horizontal().apply {
-            setPadding(24, 24, 24, 12)
+            setPadding(dp(20), dp(12), dp(16), dp(8))
             gravity = Gravity.CENTER_VERTICAL
             setBackgroundColor(mist)
         }
@@ -95,16 +98,19 @@ class MainActivity : Activity() {
         toolbar.addView(actionButton("Settings") { renderContent(root, Screen.SETTINGS) })
         root.addView(toolbar)
 
-        val content = vertical().apply { tag = "content"; setPadding(24, 20, 24, 20) }
+        val content = vertical().apply { tag = "content"; setPadding(dp(20), dp(12), dp(20), dp(20)) }
         root.addView(scroll(content), LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f))
 
         val nav = horizontal().apply {
             gravity = Gravity.CENTER
-            setPadding(8, 8, 8, 16)
-            setBackgroundColor(mist)
+            setPadding(dp(10), dp(8), dp(10), dp(10))
+            setBackgroundColor(Color.WHITE)
         }
         listOf(Screen.DASHBOARD, Screen.TASKS, Screen.TIMETABLE, Screen.PROGRESS).forEach { screen ->
-            nav.addView(actionButton(screen.label) { showShell(screen) }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+            nav.addView(
+                navigationButton(screen.label, screen == selected) { showShell(screen) },
+                LinearLayout.LayoutParams(0, dp(44), 1f).apply { setMargins(dp(3), 0, dp(3), 0) }
+            )
         }
         root.addView(nav)
         setContentView(root)
@@ -350,46 +356,91 @@ class MainActivity : Activity() {
     private fun title(text: String, size: Int): TextView = TextView(this).apply {
         this.text = localized(text)
         textSize = size.toFloat()
-        setTextColor(blue)
+        setTextColor(ink)
         typeface = Typeface.DEFAULT_BOLD
-        setPadding(0, 8, 0, 8)
+        setPadding(0, dp(6), 0, dp(6))
     }
 
     private fun section(text: String): TextView = TextView(this).apply {
         this.text = localized(text)
-        textSize = 20f
+        textSize = 18f
         typeface = Typeface.DEFAULT_BOLD
         setTextColor(green)
-        setPadding(0, 24, 0, 8)
+        setPadding(0, dp(20), 0, dp(6))
     }
 
     private fun label(text: String): TextView = TextView(this).apply {
         this.text = localized(text)
-        textSize = 15f
-        setTextColor(Color.DKGRAY)
-        setPadding(0, 8, 0, 8)
+        textSize = 14f
+        setTextColor(Color.rgb(86, 101, 112))
+        setPadding(0, dp(6), 0, dp(6))
     }
 
     private fun card(text: String): TextView = TextView(this).apply {
         this.text = text
-        textSize = 16f
-        setTextColor(Color.rgb(33, 40, 46))
-        setBackgroundColor(mist)
-        setPadding(20, 16, 20, 16)
+        textSize = 15f
+        setTextColor(ink)
+        setLineSpacing(dp(3).toFloat(), 1f)
+        background = roundedBackground(Color.WHITE, line, 16)
+        setPadding(dp(16), dp(14), dp(16), dp(14))
+        layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+            bottomMargin = dp(10)
+        }
+        ViewCompat.setElevation(this, dp(1).toFloat())
     }
 
     private fun input(hint: String): EditText = EditText(this).apply {
         this.hint = localized(hint)
-        textSize = 16f
+        textSize = 15f
         setSingleLine(false)
+        setTextColor(ink)
+        setHintTextColor(Color.rgb(130, 145, 154))
+        background = roundedBackground(Color.WHITE, line, 12)
+        setPadding(dp(14), dp(12), dp(14), dp(12))
+        layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(54)).apply {
+            bottomMargin = dp(8)
+        }
     }
 
     private fun actionButton(text: String, onClick: () -> Unit): Button = Button(this).apply {
         this.text = localized(text)
+        isAllCaps = false
+        textSize = 14f
+        typeface = Typeface.DEFAULT_BOLD
         setTextColor(Color.WHITE)
-        setBackgroundColor(if (text == "Delete") Color.rgb(160, 46, 46) else blue)
+        background = roundedBackground(if (text == "Delete") Color.rgb(159, 58, 58) else blue, Color.TRANSPARENT, 14)
+        minHeight = dp(44)
+        minimumHeight = dp(44)
+        setPadding(dp(16), dp(8), dp(16), dp(8))
+        stateListAnimator = null
+        layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, dp(48)).apply {
+            setMargins(dp(3), dp(4), dp(3), dp(4))
+        }
         setOnClickListener { onClick() }
     }
+
+    private fun navigationButton(text: String, selected: Boolean, onClick: () -> Unit): Button = Button(this).apply {
+        this.text = localized(text)
+        isAllCaps = false
+        textSize = 12f
+        typeface = Typeface.DEFAULT_BOLD
+        setTextColor(if (selected) Color.WHITE else blue)
+        background = roundedBackground(if (selected) blue else Color.WHITE, if (selected) blue else line, 14)
+        minHeight = dp(40)
+        minimumHeight = dp(40)
+        setPadding(dp(4), dp(6), dp(4), dp(6))
+        stateListAnimator = null
+        setOnClickListener { onClick() }
+    }
+
+    private fun roundedBackground(fillColor: Int, strokeColor: Int, cornerRadius: Int): GradientDrawable =
+        GradientDrawable().apply {
+            setColor(fillColor)
+            setCornerRadius(dp(cornerRadius).toFloat())
+            if (strokeColor != Color.TRANSPARENT) setStroke(dp(1), strokeColor)
+        }
+
+    private fun dp(value: Int): Int = (value * resources.displayMetrics.density + 0.5f).toInt()
 
     private fun toast(message: String) = Toast.makeText(this, message, Toast.LENGTH_LONG).show()
 
