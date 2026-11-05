@@ -4,17 +4,18 @@ StudyMate uses Firebase Anonymous Authentication to protect each installation's 
 
 ## Firebase Console setup
 
-1. Create a Firebase project in the Firebase Console.
-2. Add an Android app with package name `com.st10457568.studymate`.
-3. Download the app's `google-services.json` and place it at `app/google-services.json` in this checkout. Keep the file local; it is ignored by Git.
-4. In **Authentication → Sign-in method**, enable **Anonymous** sign-in.
-5. Create a **Cloud Firestore** database. Choose the database location carefully because Google Cloud does not allow changing it after creation.
-6. In Firestore **Rules**, deploy the contents of [`firestore.rules`](../firestore.rules). Do not use test mode or allow unauthenticated access.
-7. To enable assignment attachments too, create a Firebase Storage bucket and deploy [`storage.rules`](../storage.rules). File uploads are optional for cloud sync; the Firestore database alone is enough to sync planner data.
+1. Sign in to the [Firebase Console](https://console.firebase.google.com/) with the Google account that should own the project and create a project named `StudyMate`. Google Analytics is optional for this app; skip it if you do not need analytics.
+2. In Project Overview, choose **Add app → Android** and enter the exact package name `com.st10457568.studymate`.
+3. Download `google-services.json` and put it at `app/google-services.json` in this checkout. Keep the filename exact; the file is ignored by Git and must not be committed.
+4. In **Authentication → Get started → Sign-in method**, enable **Anonymous** sign-in and save.
+5. In **Firestore Database**, create a database. Select a location you can keep long-term. Choose production mode, then open the **Rules** tab and publish the contents of [`firestore.rules`](../firestore.rules). Do not use test mode or allow unauthenticated access.
+6. To enable assignment attachments, create a default Storage bucket and publish [`storage.rules`](../storage.rules). **Cloud Storage for Firebase currently requires the Blaze pay-as-you-go billing plan.** It can incur charges if usage exceeds no-cost allowances. Set a budget alert and skip Storage until you are ready to enable billing. Firestore sync does not require Storage.
+
+The project already includes `firebase.json` linking the Firestore and Storage rule files. If you install the Firebase CLI, select the new project with `firebase use --add`; deploy rules with `firebase deploy --only firestore:rules`, and deploy Storage rules only after enabling Storage with `firebase deploy --only storage`.
 
 ## Build and use
 
-1. Sync the Gradle project in Android Studio after placing the JSON file.
+1. Sync the Gradle project in Android Studio after placing the JSON file. The Google Services plugin and Firebase initialization activate automatically when the file exists.
 2. Build and install the app. The Google Services plugin is applied only when `app/google-services.json` exists.
 3. Register or log in to the local StudyMate account while online once. The app signs into Firebase anonymously and stores the planner profile under `users/{anonymousUid}/profiles/{localUserId}`.
 4. Check that profile in Firestore. Add or change an assignment, subject, timetable entry, or mark and confirm the `updatedAt` value and data change.
