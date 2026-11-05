@@ -34,14 +34,14 @@ Git provides the project history. GitHub hosts the Kotlin source and CI workflow
 | Settings | Reminder preference and language setting are persisted locally. |
 | App icon | Vector launcher icon is included. |
 | Automated tests and GitHub Actions | Unit tests and workflow are included. The final commit's Android CI run passed. |
-| README, report, release notes | README, this report, and `RELEASE_NOTES.md` are included. Add the video link after recording. |
+| README, report, release notes | README, this report, and `RELEASE_NOTES.md` are included. The supplied YouTube demo link is in the README. |
 | GitHub commit, push, final tag | Final source is pushed to `main` and tagged `final-PoE`; CI passed. |
 | Cloud sync / online database | Firestore sync adapter, offline write queue, and rules are included. Live cloud behavior still requires the owner's Firebase configuration and Anonymous Authentication setup. |
 | Single sign-on | Not implemented. Requires an identity provider and OAuth credentials. Marked PoE-only in the brief. |
 | Real-time push notifications | Not implemented. Requires FCM project configuration and a sending service. Marked PoE-only in the brief. |
 | Publication evidence | A signed release AAB has been generated and verified, and the signed release installed and launched on the Pixel emulator. Physical-phone screenshots are included in `docs/screenshots/`; verify them against the signed release on a phone. Play Console upload/review and the narrated video are still outstanding. |
 | Android API target | Configured to target Android 16 (API 36) for current Play submissions. |
-| Demo video and voice-over | Must be recorded from the app on a physical phone and linked here. |
+| Demo video and voice-over | YouTube link is included in the README. Confirm it has voice-over and shows the app running on a physical phone. |
 | AI use note | Included in README; adapt it to the actual tools used for the final submission. |
 
 ## Release preparation

@@ -5,7 +5,8 @@
 1. Install the signed release on a physical Android phone and exercise login, assignments, timetable, marks, and settings. Confirm the submitted screenshots match this release build. The debug and signed release builds have already installed and opened successfully on the Pixel emulator.
 2. Enable GitHub Pages and verify the privacy policy and account-deletion pages are publicly accessible.
 3. If cloud sync or assignment uploads are part of the submitted version, finish Firebase setup, then rebuild the signed APK and AAB. Upload the AAB to Play Console; use the APK for direct phone installation/testing.
-4. Complete Play Console declarations and internal testing before applying for production.
+4. Check that the linked YouTube demo is unlisted, includes voice-over, and demonstrates the app on a physical phone.
+5. Complete Play Console declarations and internal testing before applying for production.
 
 ## Project preparation
 
@@ -18,6 +19,8 @@
 - [x] Signed Play App Bundle generated at `app/build/outputs/bundle/release/app-release.aab` (local release lint task skipped after it stalled; CI unit test and debug build passed).
 - [x] Android Studio run configuration changed to deploy “APK from app bundle”; debug and signed release launches succeeded on the Pixel emulator. The debug build was uninstalled before installing the differently signed release, which reset emulator app data.
 - [x] Captured physical-phone screenshots of login, dashboard, tasks, timetable, progress, and settings; see [`screenshots/`](screenshots/).
+- [x] Added the supplied YouTube demo link to the README: [StudyMate demonstration](https://youtu.be/t-1ycoO1PGo).
+- [ ] Verify the video is unlisted, includes voice-over, and shows the app running on a physical phone.
 - [ ] Install and exercise the signed release on a physical phone, then confirm the screenshots match that release build. Emulator installation does not complete this physical-device check.
 - [ ] Enable GitHub Pages under repository Settings → Pages → Build and deployment → GitHub Actions. Wait for the Pages workflow, then verify `https://tin0000000.github.io/StudyMate/privacy-policy.html` and `/delete-account.html` load publicly.
 - [ ] Add the Firebase project's `app/google-services.json`, enable Anonymous Authentication, create Firestore, and deploy `firestore.rules`. Then rebuild and sign the APK and AAB if cloud sync is part of the submitted version. See [`firebase-setup.md`](firebase-setup.md).
