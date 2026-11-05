@@ -9,7 +9,8 @@
 - [x] In-app privacy policy entry and account deletion action are implemented.
 - [x] Play listing draft and store icon/feature graphic are in this project.
 - [x] Signed Play App Bundle generated at `app/build/outputs/bundle/release/app-release.aab` (local release lint task skipped after it stalled; CI unit test and debug build passed).
-- [ ] Build and install the signed release on a physical phone; capture real screenshots of the final app.
+- [x] Capture physical-phone screenshots of login, dashboard, tasks, timetable, progress, and settings; see [`screenshots/`](screenshots/).
+- [ ] Install and exercise the signed release on a physical phone, then confirm the screenshots match that release build.
 - [ ] Enable GitHub Pages under repository Settings → Pages → Build and deployment → GitHub Actions. Wait for the Pages workflow, then verify `https://tin0000000.github.io/StudyMate/privacy-policy.html` and `/delete-account.html` load publicly.
 - [ ] Add the Firebase project's `app/google-services.json`, enable Anonymous Authentication, create Firestore, deploy `firestore.rules`, and rebuild the release if cloud sync is part of the submitted version. See [`firebase-setup.md`](firebase-setup.md).
 - [ ] If assignment file uploads are included, create a Storage bucket, deploy `storage.rules`, and rebuild. Storage is optional for Firestore cloud sync.

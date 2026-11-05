@@ -33,6 +33,25 @@ The sync path can be verified after Firebase setup by creating records while off
 
 The generated debug APK is at `app/build/outputs/apk/debug/app-debug.apk`. The signed Play App Bundle is at `app/build/outputs/bundle/release/app-release.aab`. The AAB's signature was verified; the local release lint task was skipped after it stalled, and final GitHub CI passed unit tests and the debug build. The upload keystore and `signing.properties` are local ignored files; back them up securely and never commit them. The privacy policy is in `docs/privacy-policy.html`; enable GitHub Pages for this repository before using its public URL.
 
+## App screenshots
+
+Screenshots supplied from StudyMate running on an Android phone:
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/screenshots/login.jpeg" width="240" alt="StudyMate login screen"><br>Login</td>
+    <td align="center"><img src="docs/screenshots/dashboard.jpeg" width="240" alt="StudyMate dashboard"><br>Dashboard</td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/tasks.jpeg" width="240" alt="StudyMate tasks screen"><br>Tasks</td>
+    <td align="center"><img src="docs/screenshots/timetable.jpeg" width="240" alt="StudyMate timetable screen"><br>Timetable</td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/progress.jpeg" width="240" alt="StudyMate progress screen"><br>Progress</td>
+    <td align="center"><img src="docs/screenshots/settings.jpeg" width="240" alt="StudyMate settings screen"><br>Settings</td>
+  </tr>
+</table>
+
 ## Demo video outline
 
 Record on a physical Android phone. Show registration, logout/login, adding and completing an assignment, adding a timetable entry, adding a mark, changing the language and reminder preference, then open the dashboard and demonstrate the quote/API fallback. Narrate the local NoSQL storage, offline behavior, REST API, and CI workflow accurately. Do not claim that cloud sync, Google SSO, or FCM push is implemented in this build.
