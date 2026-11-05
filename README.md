@@ -58,11 +58,10 @@ Screenshots supplied from StudyMate running on an Android phone:
 
 ## Demo video outline
 
-Record on a physical Android phone. Show registration, logout/login, adding and completing an assignment, adding a timetable entry, adding a mark, changing the language and reminder preference, then open the dashboard and demonstrate the quote/API fallback. Narrate the local NoSQL storage, offline behavior, REST API, and CI workflow accurately. Do not claim that cloud sync, Google SSO, or FCM push is implemented in this build.
+Recorded on a physical Android phone. Show registration, logout/login, adding and completing an assignment, adding a timetable entry, adding a mark, changing the language and reminder preference, then open the dashboard and demonstrate the quote/API fallback. Narrate the local NoSQL storage, offline behavior, REST API, and CI workflow accurately. Do not claim that cloud sync, Google SSO, or FCM push is implemented in this build.
 
 Demo video: [Watch StudyMate on YouTube](https://youtu.be/t-1ycoO1PGo).
 
-Before submission, confirm the video is unlisted, includes voice-over, and shows the app running on a physical Android phone.
 
 ## GitHub and release process
 
