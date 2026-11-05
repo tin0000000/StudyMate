@@ -26,7 +26,7 @@ Git provides the project history. GitHub hosts the Kotlin source and CI workflow
 
 | Assignment item | Current project evidence/status |
 | --- | --- |
-| Working Android app, phone demonstration | Android source and debug build target are present. Physical-phone screenshots of login, dashboard, tasks, timetable, progress, and settings are included in `docs/screenshots/`; record the requested narrated video. |
+| Working Android app, phone demonstration | Debug and signed release builds installed and launched successfully on the Pixel emulator after changing Android Studio deployment to “APK from app bundle.” Physical-phone screenshots of login, dashboard, tasks, timetable, progress, and settings are included in `docs/screenshots/`; verify the signed release on a physical phone and record the requested narrated video. |
 | NoSQL database, storing and reading data | Local key-value store with JSON documents; repository methods implement reads and writes for each collection. |
 | Blob storage | Optional assignment file uploads use Firebase Storage when the owner's project and bucket are configured; `storage.rules` enforces owner scope and a 10 MB upload limit. |
 | REST API | ZenQuotes daily endpoint and local fallback are implemented. |
@@ -39,14 +39,14 @@ Git provides the project history. GitHub hosts the Kotlin source and CI workflow
 | Cloud sync / online database | Firestore sync adapter, offline write queue, and rules are included. Live cloud behavior still requires the owner's Firebase configuration and Anonymous Authentication setup. |
 | Single sign-on | Not implemented. Requires an identity provider and OAuth credentials. Marked PoE-only in the brief. |
 | Real-time push notifications | Not implemented. Requires FCM project configuration and a sending service. Marked PoE-only in the brief. |
-| Publication evidence | A signed release AAB has been generated and verified. Physical-phone screenshots are included in `docs/screenshots/`. Play Console upload/review and the narrated video are still outstanding. |
+| Publication evidence | A signed release AAB has been generated and verified, and the signed release installed and launched on the Pixel emulator. Physical-phone screenshots are included in `docs/screenshots/`; verify them against the signed release on a phone. Play Console upload/review and the narrated video are still outstanding. |
 | Android API target | Configured to target Android 16 (API 36) for current Play submissions. |
 | Demo video and voice-over | Must be recorded from the app on a physical phone and linked here. |
 | AI use note | Included in README; adapt it to the actual tools used for the final submission. |
 
 ## Release preparation
 
-The signed Play App Bundle is at `app/build/outputs/bundle/release/app-release.aab`. It was generated with the local upload keystore and verified; the local Gradle release lint task was skipped after it stalled. The final GitHub CI run passed unit tests and the debug build. Phone screenshots are included in `docs/screenshots/`; before production, the owner must enable GitHub Pages, verify the public policy/deletion URLs, install and exercise the signed release on a physical phone, record and link the narrated demo, and complete Play Console declarations and review. Firebase-backed features require the owner's Firebase project configuration. Do not commit signing secrets, `google-services.json`, or Firebase service-account credentials.
+The signed Play App Bundle is at `app/build/outputs/bundle/release/app-release.aab`. It was generated with the local upload keystore and verified; the local Gradle release lint task was skipped after it stalled. The final GitHub CI run passed unit tests and the debug build. Android Studio’s “APK from app bundle” deployment successfully installed and launched the signed release on the Pixel emulator. Phone screenshots are included in `docs/screenshots/`; before production, the owner must enable GitHub Pages, verify the public policy/deletion URLs, install and exercise the signed release on a physical phone, record and link the narrated demo, and complete Play Console declarations and review. Firebase-backed features require the owner's Firebase project configuration. Do not commit signing secrets, `google-services.json`, or Firebase service-account credentials.
 
 ## AI assistance disclosure
 
