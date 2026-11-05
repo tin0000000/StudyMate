@@ -9,4 +9,5 @@ local.properties
 *.jks
 *.keystore
 signing.properties
+app/google-services.json
 captures/

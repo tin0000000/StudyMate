@@ -27,14 +27,16 @@ class LocalStudyRepository(context: Context) {
 
     fun firebaseConfigured(): Boolean = FirebaseApp.getApps(appContext).isNotEmpty()
 
-    fun startCloudSync() = queueCloudSync()
+    fun startCloudSync() {
+        syncWithCloud { }
+    }
 
     fun rescheduleReminders() {
         if (!notificationEnabled()) return
         assignments().filterNot { it.completed }.forEach { ReminderScheduler.schedule(appContext, it) }
     }
 
-    /** Firestore queues these writes in its local cache while offline and sends them after reconnect. */
+    /** Pull an existing profile first so first launch on an install cannot overwrite cloud data. */
     fun syncWithCloud(onComplete: (Result<Boolean>) -> Unit) {
         if (!firebaseConfigured()) {
             onComplete(Result.failure(IllegalStateException("Add the Firebase project configuration before cloud sync.")))
@@ -47,14 +49,25 @@ class LocalStudyRepository(context: Context) {
         }
         val auth = FirebaseAuth.getInstance()
         val continueSync: () -> Unit = {
-            val document = profileDocument(auth.currentUser!!.uid, userId)
-            document.set(cloudSnapshot())
-                .continueWithTask { document.get() }
-                .addOnSuccessListener { snapshot ->
-                    if (snapshot.exists()) applyCloudSnapshot(snapshot.data.orEmpty())
-                    onComplete(Result.success(!snapshot.metadata.isFromCache))
-                }
-                .addOnFailureListener { onComplete(Result.failure(it)) }
+            val firebaseUid = auth.currentUser?.uid
+            if (firebaseUid == null) {
+                onComplete(Result.failure(IllegalStateException("Firebase sign-in did not complete.")))
+            } else {
+                val document = profileDocument(firebaseUid, userId)
+                document.get()
+                    .addOnSuccessListener { snapshot ->
+                        if (snapshot.exists()) {
+                            applyCloudSnapshot(snapshot.data.orEmpty())
+                            onComplete(Result.success(!snapshot.metadata.isFromCache))
+                        } else {
+                            // Firestore persistence queues this initial upload if the device is offline.
+                            document.set(cloudSnapshot())
+                                .addOnSuccessListener { onComplete(Result.success(true)) }
+                                .addOnFailureListener { onComplete(Result.failure(it)) }
+                        }
+                    }
+                    .addOnFailureListener { onComplete(Result.failure(it)) }
+            }
         }
         if (auth.currentUser != null) continueSync()
         else auth.signInAnonymously()
@@ -410,6 +423,7 @@ class LocalStudyRepository(context: Context) {
         val userId = currentUserId ?: return
         val auth = FirebaseAuth.getInstance()
         val push: (String) -> Unit = { firebaseUid ->
+            // Firestore persistence queues this snapshot while offline and sends it when reconnected.
             profileDocument(firebaseUid, userId).set(cloudSnapshot())
         }
         if (auth.currentUser != null) push(auth.currentUser!!.uid)

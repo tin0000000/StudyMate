@@ -4,6 +4,7 @@
 
 - Added persisted app-language selection with English, Afrikaans, and isiZulu translations for core navigation, common actions, and form labels.
 - Added an optional Firestore document sync path with per-user rules and offline queued writes, activated when the Firebase app configuration is supplied.
+- Updated Firebase Android dependencies to the supported main modules and Kotlin compiler, and changed first sync to read an existing Firestore profile before uploading local data.
 - Added assignment file attachments backed by Firebase Storage with UID-scoped access rules and a 10 MB size limit.
 - Updated the Android build to target API 36, added system-bar insets for edge-to-edge layouts, and added a privacy policy entry point and account deletion flow.
 - Added a GitHub Pages workflow for hosting the public privacy policy.
