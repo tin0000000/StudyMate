@@ -31,7 +31,7 @@ GitHub Actions runs the unit tests and debug build for pushes and pull requests 
 
 The sync path can be verified after Firebase setup by creating records while offline, reconnecting, and checking the matching document under `users/{anonymousUid}/profiles/{localUserId}` in Firestore. The blob path can be verified by attaching a file to an assignment and checking Storage under `users/{anonymousUid}/{localUserId}/assignments/`. The demo login is local and the Firebase anonymous account is device-specific; this implementation does not provide cross-device account linking.
 
-The generated debug APK is at `app/build/outputs/apk/debug/app-debug.apk`. It is suitable for installation on a test device. A Play Store release needs an upload keystore, Play Console access, a signed release bundle, and store assets. Do not commit the signing properties or keystore. The privacy policy is in `docs/privacy-policy.html`; enable GitHub Pages for this repository before using its public URL.
+The generated debug APK is at `app/build/outputs/apk/debug/app-debug.apk`. The signed Play App Bundle is at `app/build/outputs/bundle/release/app-release.aab`. The AAB's signature was verified; the local release lint task was skipped after it stalled, and final GitHub CI passed unit tests and the debug build. The upload keystore and `signing.properties` are local ignored files; back them up securely and never commit them. The privacy policy is in `docs/privacy-policy.html`; enable GitHub Pages for this repository before using its public URL.
 
 ## Demo video outline
 
@@ -41,12 +41,7 @@ Add the unlisted video URL to this README after recording. Keep the video voice-
 
 ## GitHub and release process
 
-The Android source and workflow are in this repository. Commit in small steps and push to the configured GitHub remote. Once the final CI build succeeds, tag the final submission commit:
-
-```bash
-git tag -a final-PoE -m "Final PoE submission"
-git push origin final-PoE
-```
+The Android source and workflow are in this repository. The final commit has been pushed to `main` and tagged `final-PoE` after CI passed. For a later release, update the version code, rebuild and sign the AAB with the same upload key, then upload it through Play Console.
 
 See [FINAL_REPORT.md](FINAL_REPORT.md) for the design, implementation, CI, and current requirement status. See [RELEASE_NOTES.md](RELEASE_NOTES.md) for the changes since the prototype.
 See [docs/play-console-checklist.md](docs/play-console-checklist.md) for the upload steps and required account-specific items.

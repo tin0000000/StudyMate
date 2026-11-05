@@ -11,7 +11,7 @@
 - [x] Signed Play App Bundle generated at `app/build/outputs/bundle/release/app-release.aab` (local release lint task skipped after it stalled; CI unit test and debug build passed).
 - [ ] Build and install the signed release on a physical phone; capture real screenshots of the final app.
 - [ ] Enable GitHub Pages under repository Settings → Pages → Build and deployment → GitHub Actions. Wait for the Pages workflow, then verify `https://tin0000000.github.io/StudyMate/privacy-policy.html` and `/delete-account.html` load publicly.
-- [ ] Decide whether Firebase is included in the release. There is no `google-services.json` in this project, so Firestore sync and file uploads will be disabled in the submitted build.
+- [x] Firebase cloud sync and file uploads are excluded from this release because no `google-services.json` was supplied; the store listing does not promise those features.
 
 ## Play Console setup
 

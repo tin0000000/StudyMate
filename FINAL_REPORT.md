@@ -14,13 +14,13 @@ The dashboard calls the ZenQuotes daily REST endpoint using a background thread 
 
 ## Automated testing and GitHub Actions
 
-`StudyRulesTest` covers email/password checks, required assignment fields and date format, ordering by due date and priority, and subject average calculation. `.github/workflows/android.yml` checks out the repository, installs JDK 17 and Android SDK 34, then runs `testDebugUnitTest` and `assembleDebug` on pushes and pull requests to `main` and `master`.
+`StudyRulesTest` covers email/password checks, required assignment fields and date format, ordering by due date and priority, and subject average calculation. `.github/workflows/android.yml` checks out the repository, installs JDK 17 and Android SDK 36.1, then runs `testDebugUnitTest` and `assembleDebug` on pushes and pull requests to `main` and `master`. The final tagged commit passed this workflow.
 
-GitHub Actions results are available in the repository's Actions tab after the workflow has run on GitHub. The workflow file is present in the source. A successful remote run and push cannot be evidenced until the final project revision is pushed.
+The final Android CI run is available in the repository's Actions tab. It passed `testDebugUnitTest` and `assembleDebug` for the final app code.
 
 ## Use of GitHub
 
-Git provides the project history. GitHub hosts the Kotlin source and CI workflow; Actions automates the unit-test and Android debug-build checks. Commits should describe one coherent change, and the final release commit should be tagged `final-PoE` after CI is green.
+Git provides the project history. GitHub hosts the Kotlin source and CI workflow; Actions automates the unit-test and Android debug-build checks. The final source commit is pushed to `main` and tagged `final-PoE` after CI passed.
 
 ## Requirement status and evidence
 
@@ -33,20 +33,20 @@ Git provides the project history. GitHub hosts the Kotlin source and CI workflow
 | User registration/login | Local demonstration authentication; PBKDF2 password hashing. |
 | Settings | Reminder preference and language setting are persisted locally. |
 | App icon | Vector launcher icon is included. |
-| Automated tests and GitHub Actions | Unit tests and workflow source are included. Verify the run in GitHub Actions after pushing. |
+| Automated tests and GitHub Actions | Unit tests and workflow are included. The final commit's Android CI run passed. |
 | README, report, release notes | README, this report, and `RELEASE_NOTES.md` are included. Add the video link after recording. |
-| GitHub commit, push, final tag | Repository has an `origin` remote. Push the reviewed final commit and tag `final-PoE` after CI succeeds. |
+| GitHub commit, push, final tag | Final source is pushed to `main` and tagged `final-PoE`; CI passed. |
 | Cloud sync / online database | Firestore sync adapter, offline write queue, and rules are included. Live cloud behavior still requires the owner's Firebase configuration and Anonymous Authentication setup. |
 | Single sign-on | Not implemented. Requires an identity provider and OAuth credentials. Marked PoE-only in the brief. |
 | Real-time push notifications | Not implemented. Requires FCM project configuration and a sending service. Marked PoE-only in the brief. |
-| Publication evidence | No Play Console access, production signing key, signed release APK, or store screenshots are supplied. These must be produced by the account owner. |
+| Publication evidence | A signed release AAB has been generated and verified. Play Console upload/review, physical-device screenshots, and the narrated video are still outstanding. |
 | Android API target | Configured to target Android 16 (API 36) for current Play submissions. |
 | Demo video and voice-over | Must be recorded from the app on a physical phone and linked here. |
 | AI use note | Included in README; adapt it to the actual tools used for the final submission. |
 
 ## Release preparation
 
-The debug APK is for testing only. Before Play Store publication, configure the app's Firebase project if cloud features are required, create a protected production signing key, prepare store listing assets and privacy details, build a signed release APK/AAB, and capture genuine screenshots from the published or console-uploaded app. Do not commit signing secrets or Firebase service-account credentials.
+The signed Play App Bundle is at `app/build/outputs/bundle/release/app-release.aab`. It was generated with the local upload keystore and verified; the local Gradle release lint task was skipped after it stalled. The final GitHub CI run passed unit tests and the debug build. Before production, the owner must enable GitHub Pages, verify the public policy/deletion URLs, install and exercise the bundle on a physical phone, capture genuine screenshots, record and link the narrated demo, and complete Play Console declarations and review. Firebase-backed features require the owner's Firebase project configuration. Do not commit signing secrets, `google-services.json`, or Firebase service-account credentials.
 
 ## AI assistance disclosure
 
